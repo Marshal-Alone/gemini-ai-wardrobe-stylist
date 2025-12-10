@@ -1,0 +1,7 @@
+{
+  "name": "Gemini AI Wardrobe Stylist",
+  "description": "A personal AI stylist that generates virtual try-ons combining your clothes and provides expert fashion advice using Gemini 2.5 Flash models.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
