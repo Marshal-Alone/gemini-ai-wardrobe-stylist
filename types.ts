@@ -17,6 +17,8 @@ export interface UserStats {
   bodyType: string;
   is3DScan: boolean;
   occasion: string;
+  stylePreferences?: string; // Added to match prompt usage
+  additionalNotes?: string; // Added from new schema
 }
 
 export interface TryOnResult {
@@ -35,4 +37,5 @@ export interface StylistFeedback {
   colorAnalysis: string;
   verdict: string;
   bestForEvent: string;
+  improvements?: string; // Added from new schema
 }
