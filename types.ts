@@ -39,3 +39,10 @@ export interface StylistFeedback {
   bestForEvent: string;
   improvements?: string; // Added from new schema
 }
+
+export interface SavedScan {
+  id: string;
+  timestamp: number;
+  images: UploadedImage[];
+  preview: string; // Base64 of first image for thumbnail
+}

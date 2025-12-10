@@ -29,8 +29,8 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onComplete, onCancel }) =
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', height: { ideal: 1080 } } 
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', height: { ideal: 1080 } }
       });
       setStream(mediaStream);
       if (videoRef.current) {
@@ -68,11 +68,11 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onComplete, onCancel }) =
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       // Set canvas dimensions to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
+
       // Draw video frame to canvas
       const ctx = canvas.getContext('2d');
       if (ctx) {
@@ -80,9 +80,9 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onComplete, onCancel }) =
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         const dataUrl = canvas.toDataURL('image/png');
-        
+
         const newCaptures = [...captures, dataUrl];
         setCaptures(newCaptures);
 
@@ -97,24 +97,36 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onComplete, onCancel }) =
 
   const finishScanning = (finalCaptures: string[]) => {
     stopCamera();
-    
+
     // Convert DataURLs to UploadedImage format
     const uploadedImages: UploadedImage[] = finalCaptures.map((url, index) => {
-        // Create a dummy file object since we just have the data URL
-        const blobBin = atob(url.split(',')[1]);
-        const array = [];
-        for(let i = 0; i < blobBin.length; i++) {
-            array.push(blobBin.charCodeAt(i));
-        }
-        const blob = new Blob([new Uint8Array(array)], {type: 'image/png'});
-        const file = new File([blob], `scan_${index}.png`, { type: 'image/png' });
+      // Create a dummy file object since we just have the data URL
+      const blobBin = atob(url.split(',')[1]);
+      const array = [];
+      for (let i = 0; i < blobBin.length; i++) {
+        array.push(blobBin.charCodeAt(i));
+      }
+      const blob = new Blob([new Uint8Array(array)], { type: 'image/png' });
+      const file = new File([blob], `scan_${index}.png`, { type: 'image/png' });
 
-        return {
-            id: `scan-${Date.now()}-${index}`,
-            url: url,
-            file: file
-        };
+      return {
+        id: `scan-${Date.now()}-${index}`,
+        url: url,
+        file: file
+      };
     });
+
+    // Save to localStorage
+    try {
+      const { saveScan } = require('../services/localStorageService');
+      const savedScan = saveScan(uploadedImages);
+      if (savedScan) {
+        console.log('✅ 3D scan saved to local storage');
+      }
+    } catch (error) {
+      console.error('Failed to save scan to localStorage:', error);
+      // Continue anyway - don't block the user flow
+    }
 
     onComplete(uploadedImages);
   };
@@ -139,24 +151,24 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onComplete, onCancel }) =
 
       {/* Main Viewport */}
       <div className="relative w-full max-w-md aspect-[3/4] bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          muted 
-          className="w-full h-full object-cover transform -scale-x-100" 
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-full h-full object-cover transform -scale-x-100"
         />
         <canvas ref={canvasRef} className="hidden" />
 
         {/* Guides / Overlays */}
         <div className="absolute inset-0 pointer-events-none border-[1px] border-white/20 m-8 rounded-xl">
-             {/* Crosshair */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-[1px] bg-white/30" />
-                <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[1px] bg-white/30" />
-             </div>
+          {/* Crosshair */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-[1px] bg-white/30" />
+            <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full h-[1px] bg-white/30" />
+          </div>
         </div>
-        
+
         {/* Countdown Overlay */}
         {countdown !== null && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-20">
@@ -166,20 +178,20 @@ const CameraScanner: React.FC<CameraScannerProps> = ({ onComplete, onCancel }) =
 
         {/* Instruction Banner */}
         <div className="absolute bottom-24 left-0 right-0 text-center px-6">
-            <div className="bg-black/60 backdrop-blur-md text-white py-2 px-4 rounded-full inline-block border border-white/10">
-                {currentStep.instruction}
-            </div>
+          <div className="bg-black/60 backdrop-blur-md text-white py-2 px-4 rounded-full inline-block border border-white/10">
+            {currentStep.instruction}
+          </div>
         </div>
 
         {/* Capture Controls */}
         <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-8">
-            <button 
-                onClick={handleCapture}
-                disabled={countdown !== null}
-                className="w-16 h-16 rounded-full bg-white border-4 border-zinc-300 flex items-center justify-center shadow-lg hover:scale-105 transition-transform active:scale-95"
-            >
-                <div className="w-14 h-14 rounded-full border-2 border-black" />
-            </button>
+          <button
+            onClick={handleCapture}
+            disabled={countdown !== null}
+            className="w-16 h-16 rounded-full bg-white border-4 border-zinc-300 flex items-center justify-center shadow-lg hover:scale-105 transition-transform active:scale-95"
+          >
+            <div className="w-14 h-14 rounded-full border-2 border-black" />
+          </button>
         </div>
       </div>
     </div>
